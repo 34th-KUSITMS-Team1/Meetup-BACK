@@ -1,0 +1,33 @@
+package com.chamabosal.global.config;
+
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.test.web.servlet.MockMvc;
+
+@SpringBootTest
+@AutoConfigureMockMvc
+class SwaggerConfigTest {
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @Test
+    void API_문서에_정보가_담기고_에러코드_페이지는_제외된다() throws Exception {
+        mockMvc.perform(get("/v3/api-docs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.info.title").value("Chamabosal API"))
+                .andExpect(jsonPath("$.paths['/docs/error-codes']").doesNotExist());
+    }
+
+    @Test
+    void Swagger_UI에_접속할_수_있다() throws Exception {
+        mockMvc.perform(get("/swagger-ui/index.html"))
+                .andExpect(status().isOk());
+    }
+}
