@@ -41,7 +41,7 @@ prefix: 한국어 설명 (#issue)
 - `prefix: 한국어 설명 (#이슈번호)` 형태이며, `:` 뒤에만 space가 있음
 - subject는 어떤 작업을 했는지 명확하게 드러나야 하고, 너무 길지 않게 작성
 - 본문은 한 줄당 72자 내로 작성
-- 본문 내용은 양에 구애받지 않고 최대한 상세히 작성
+- 본문은 필요할 때만 1~3줄로 간단히 작성하고, 자세한 설명은 PR 본문에 작성
 - 본문은 어떻게 변경했는지보다 무엇을, 왜 변경했는지를 설명
 
 ### 이슈 · PR
@@ -53,8 +53,8 @@ prefix: 한국어 설명 (#issue)
 
 ### PR 리뷰 · 머지 기준
 
-- 작업 브랜치 → PR → 코드리뷰 봇 리뷰 반영 → 팀원 리뷰 (최소 1개) → 머지
-- PR 올린 사람이 AI 봇 피드백을 반영한 뒤 머지
+- 작업 브랜치 → PR → 코드리뷰 봇 피드백 반영 → 머지
+- PR 올린 사람이 AI 봇 피드백을 반영한 뒤 직접 머지 (팀원 리뷰는 필수 아님)
 - `dev` / `main`에 직접 push하지 않고 모든 변경은 PR로 머지 (브랜치 보호 규칙은 운영 배포 전 설정)
 
 ---
@@ -81,7 +81,7 @@ src/main/java/{basePackage}/
     │   ├── response/      # Response, ErrorResponse
     │   ├── util/
     │   └── ErrorCodeViewController   # 에러코드 확인 페이지
-    ├── config/            # SwaggerConfig, JpaAuditingConfig 등
+    ├── config/            # SwaggerConfig, JpaAuditingConfig, ClockConfig 등
     ├── security/          # 인증 도입 시 (config, filter, handler 등)
     └── discord/           # Discord 에러 알림 (webhook)
 ```
@@ -119,6 +119,8 @@ public record TestCreateResponse(Long id, String title) {
 ```
 
 ### Swagger UI 포맷
+
+- 로컬 접속: `http://localhost:8080/swagger-ui/index.html` (API 스펙 JSON: `/v3/api-docs`)
 
 ```java
 @RestController
@@ -194,3 +196,24 @@ return ResponseEntity.ok(Response.ok(response));   // 메시지 없이
 - 성공 응답은 `ResponseEntity<Response<T>>`로 반환하고 HTTP 상태코드를 명시
 - `Response` 정적 메서드는 `ok(data)`, `ok(message, data)`, `created(message, data)`만 사용
 - 실패 응답은 컨트롤러에서 만들지 않고 예외를 던지면 `GlobalExceptionHandler`가 `ErrorResponse`로 변환
+
+### 에러코드
+
+- 공통 에러는 `BaseErrorCode`, 도메인 에러는 도메인별 `{도메인}ErrorCode` enum을 만들어 `ErrorCode`를 구현
+- 상수 이름은 의미가 드러나게, `code`는 `{DOMAIN}_{nnn}` 형식으로 작성 (예: `MEETUP_NOT_FOUND` / `MEETUP_001`)
+- `code`는 프론트와의 약속이므로 한 번 정하면 바꾸지 않고, 중복되면 서버가 기동되지 않음
+- 실패 시 `throw new BaseException(MeetupErrorCode.MEETUP_NOT_FOUND)`처럼 예외를 던짐
+- 정의된 에러코드는 `/docs/error-codes` 페이지에서 자동으로 확인 가능 (별도 문서 수정 불필요)
+
+```java
+@Getter
+@RequiredArgsConstructor
+public enum MeetupErrorCode implements ErrorCode {
+
+    MEETUP_NOT_FOUND(HttpStatus.NOT_FOUND, "MEETUP_001", "존재하지 않는 모임입니다.");
+
+    private final HttpStatus httpStatus;
+    private final String code;
+    private final String message;
+}
+```
