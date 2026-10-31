@@ -1,3 +1,12 @@
 spring:
   application:
     name: chamabosal
+  task:
+    execution:
+      # 전용 실행기 빈(AsyncConfig)이 있어도 기본 실행기 자동 구성을 유지한다.
+      mode: force
+
+discord:
+  webhook:
+    # 비어 있으면(로컬 등) 에러 알림을 보내지 않는다.
+    error-url: ${DISCORD_ERROR_WEBHOOK_URL:}
