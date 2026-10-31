@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 class ConstraintViolationHandlingTest {
 
     private final Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
-    private final GlobalExceptionHandler handler = new GlobalExceptionHandler();
+    private final GlobalExceptionHandler handler = new GlobalExceptionHandler(event -> {});
 
     @Test
     void 중첩_경로여도_field에는_마지막_필드명만_담긴다() {
